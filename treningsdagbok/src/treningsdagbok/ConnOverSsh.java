@@ -58,6 +58,7 @@ public class ConnOverSsh {
 			//3. Execute SQL query
 			ResultSet myRs = myStmt.executeQuery("SELECT * FROM Aktivitet");
 			//4. Process the result set
+			System.out.println("Aktiviteter i tabellen: ");
 			while (myRs.next()) {
 				System.out.println(myRs.getString("A_Navn"));
 				}
