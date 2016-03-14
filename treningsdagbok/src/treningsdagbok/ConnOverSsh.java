@@ -11,11 +11,12 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import java.sql.Connection;
+import treningsdagbok.ConnectionSession;
 
 
 public class ConnOverSsh {
 
-	public static void main(String[] args) throws SQLException{
+	public ConnectionSession openConnection() throws SQLException{
 		int lport = 52682;
 		String rhost = "arctos";
 		String host = "login.stud.ntnu.no";
@@ -26,15 +27,15 @@ public class ConnOverSsh {
 		String dbpassword = "tivoli";
 		String url= "jdbc:mysql://localhost:"+lport+"/annarbj_treningsdagbok";
 		String driverName = "com.mysql.jdbc.Driver";
-		Connection conn = null;
+		ConnectionSession connSess= new ConnectionSession();
 		Session session = null;
 		
 		try{
 			//Set StrictHostKeyChecking property to no to avoid UnknownHostKey issue
 			System.out.println("Passord: ");
-			Scanner scanIn = new Scanner(System.in);
-		    password = scanIn.nextLine();
-		    scanIn.close(); 
+			Scanner input = new Scanner(System.in);
+		    password = input.nextLine();
+		    //input.close(); 
 		    java.util.Properties config = new java.util.Properties(); 
 	        config.put("StrictHostKeyChecking", "no");
 	        JSch jsch = new JSch();
@@ -48,34 +49,32 @@ public class ConnOverSsh {
 	        System.out.println("localhost:"+assinged_port+" -> "+rhost+":"+rport);
 	        System.out.println("Port Forwarded");
 	        
-	        //mysql database connectivity
+	       
 	        Class.forName(driverName).newInstance();
-	        conn = DriverManager.getConnection (url, dbuserName, dbpassword);
+	        Connection conn = DriverManager.getConnection (url, dbuserName, dbpassword);
 	        System.out.println ("Database connection established");
 	        System.out.println("DONE\n");
 	        
-	        Statement myStmt = conn.createStatement();
-			//3. Execute SQL query
-			ResultSet myRs = myStmt.executeQuery("SELECT * FROM Aktivitet");
-			//4. Process the result set
-			System.out.println("Aktiviteter i tabellen: ");
-			while (myRs.next()) {
-				System.out.println(myRs.getString("A_Navn"));
-				}
-			
+			connSess.setConn(conn);
+			connSess.setSession(session);
 	    }
 		catch(Exception e){
 	        e.printStackTrace();
 		}
-		finally{
-	        if(conn != null && !conn.isClosed()){
-	        	System.out.println("\n"+"Closing Database Connection");
-	            conn.close();
-	        }
-	        if(session !=null && session.isConnected()){
-	            System.out.println("Closing SSH Connection");
-	            session.disconnect();
-	        }
-	    }
+		return connSess;
 	}
+	
+	public void closeConnection(ConnectionSession connSess) throws SQLException{
+		Connection conn = connSess.getConnection();
+		Session session = connSess.getSession();
+        if(conn != null && !conn.isClosed()){
+        	System.out.println("\n"+"Closing Database Connection");
+            conn.close();
+        }
+        if(session !=null && session.isConnected()){
+            System.out.println("Closing SSH Connection");
+            session.disconnect();
+        }
+    }
+
 }
